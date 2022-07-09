@@ -14,7 +14,7 @@ export type ResponsiveProp<
 export type StyledCssProp<
   O extends keyof React.CSSProperties = keyof React.CSSProperties
 > = {
-  css?: {
+  css: {
     [K in O]?: React.CSSProperties[K] | ResponsiveProp<React.CSSProperties[K]>
   }
 }
@@ -37,41 +37,46 @@ const mergeObjValueByMedia = (prop: string, value: ResponsiveProp) => {
 
   return valueByMedia
 }
-const convertStrValueToObj = (prop: unknown): ResponsiveProp =>
+const convertStrValueByMedia = (prop: unknown): ResponsiveProp =>
   prop != null
     ? typeof prop === 'object'
       ? prop
       : { [mediaDefaultK]: prop }
     : {}
-const resolveResponsiveProps =
-  (key: ResponsiveProp) => (props: StyledCssPropWithTheme) => {
-    return Object.keys(key).reduce((prev, _curr) => {
-      const curr = _curr as Exclude<MediaKs, MediaDefaultK>
+const styledCss = () => (props: StyledCssPropWithTheme) => {
+  valueByMedia = {}
+  let propsWithValueByMedia = {}
+  let propsWithKeyByMedia = {}
 
-      return css`
-        ${prev};
-        ${props.theme.media[curr]} {
-          ${key[curr]};
-        }
-      `
-    }, {})
+  for (const keyUntyped of Object.keys(props.css)) {
+    const key = keyUntyped as keyof React.CSSProperties
+
+    propsWithValueByMedia = {
+      ...propsWithValueByMedia,
+      [key]: convertStrValueByMedia(props.css[key])
+    }
   }
-const resolveProps = (props: StyledCssPropWithTheme) => {
-  let propsByMedia = {}
 
-  Object.keys(props.css || {}).forEach((_curr) => {
-    const curr = _curr as keyof React.CSSProperties
-    const key = convertStrValueToObj((props.css || {})[curr])
+  for (const key of Object.keys(propsWithValueByMedia)) {
+    propsWithKeyByMedia = {
+      ...propsWithKeyByMedia,
+      ...mergeObjValueByMedia(key, propsWithValueByMedia[key])
+    }
+  }
 
-    propsByMedia = mergeObjValueByMedia(curr, key)
-  })
+  return Object.keys(propsWithKeyByMedia).reduce((prev, _curr) => {
+    const curr = _curr as MediaKs
 
-  return css`
-    ${resolveResponsiveProps(propsByMedia)};
-  `
+    return css`
+      ${prev};
+      ${curr === 'DEFAULT' ? '' : props.theme.media[curr]} {
+        ${propsWithKeyByMedia[curr]};
+      }
+    `
+  }, {})
 }
+const Styled = styled.div`
+  ${styledCss}
+`
 
-const StyledCss = styled.div<StyledCssProp>(resolveProps)
-
-StyledCss.displayName = 'StyledCss'
-export default StyledCss
+export default Styled
