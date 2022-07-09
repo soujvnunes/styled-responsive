@@ -42,7 +42,7 @@ const REGEX_VOID = new RegExp(/\n\s+(?=.*)/)
 const REGEX_COLON = new RegExp(/(?<=\w+\p{Pd}*\w+):(?=\s+)/u)
 const REGEX_BRACES = new RegExp(/(?<=[}]).?(?=[{])/g)
 const REGEX_BRACES_OR_COLONS = new RegExp(
-  /(?<=\w+\p{Pd}*\w+):(?=\s+)|(?<=[}]).?(?=[{])/gu
+  /(?<=\w+\p{Pd}*\w+):(?=\s+)|(?<=\}).|.(?=\{)/gsu
 )
 
 function hasResponsiveKs(arg: string) {
