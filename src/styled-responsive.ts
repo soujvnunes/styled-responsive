@@ -18,7 +18,7 @@ export type ResponsiveProps<
  * \"@<media>:<pseudo-class>\"
  * \"@<media>@<media>:<pseudo-class>:<pseudo-class>\"
  */
-const REGEX_RESPONSIVE = new RegExp(/([\\"'])([@:]\w+?)+?\1/g)
+const REGEX_RESPONSIVE_KS = new RegExp(/([\\"'])([@:].+?)+?\1/g)
 /**
  * Start/end of line on object-CSS.
  *
@@ -36,8 +36,8 @@ const REGEX_CSSOBJECT_LINE = new RegExp(
  */
 const REGEX_VOID = new RegExp(/\n\s+(?=.*)/)
 
-function isResponsive(arg: string) {
-  return arg.match(REGEX_RESPONSIVE)
+function hasResponsiveKs(arg: string) {
+  return arg.match(REGEX_RESPONSIVE_KS)
 }
 function styledResponsive<
   O extends object,
@@ -73,7 +73,7 @@ function styledResponsive<
      */
     if (
       !Object.is(_stylesArray[0], styles.array[0]) &&
-      isResponsive(styles.array[0])?.length
+      hasResponsiveKs(styles.array[0])?.length
     ) {
       const stylesArray = styles.array[0]
         .split(REGEX_CSSOBJECT_LINE)
@@ -81,7 +81,7 @@ function styledResponsive<
         .map((style) => style.replace(REGEX_VOID, ' '))
 
       for (const style of stylesArray) {
-        console.log(style, isResponsive(style))
+        console.log(style, hasResponsiveKs(style))
       }
     }
 
