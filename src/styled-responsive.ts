@@ -64,21 +64,20 @@ const responsive =
   ) =>
   (props: P) => {
     const ref = {
-      sxs: ['']
+      sxs: [..._sxs]
     }
 
     /**
      * Resolves interpolations and merge into a template string
      */
     if (Array.isArray(fns)) {
-      ref.sxs[0] = fns.reduce((acc, _fn, index) => {
-        const isFn = typeof _fn === 'function'
-        const fn = isFn ? _fn(props) : _fn
+      for (const fn of fns) {
+        const isFn = typeof fn === 'function'
+        const fnr = isFn ? fn(props) : fn
+        const fni = fns.indexOf(fn)
 
-        return acc + fn + _sxs[index + 1]
-      }, _sxs[0])
-    } else {
-      ref.sxs = [..._sxs]
+        ref.sxs = [ref.sxs[0] + fnr + _sxs[fni + 1]]
+      }
     }
 
     /**
