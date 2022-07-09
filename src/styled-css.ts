@@ -1,13 +1,16 @@
-import styled, { css, DefaultTheme, ThemeProps } from 'styled-components'
+import styled, {
+  css,
+  DefaultTheme,
+  InterpolationValue,
+  ThemeProps
+} from 'styled-components'
 
-const mediaDefaultK = 'DEFAULT' as const
+export type MediaThemeKs = keyof DefaultTheme['media']
 
-type MediaDefaultK = typeof mediaDefaultK
-
-export type MediaKs = keyof DefaultTheme['media'] | MediaDefaultK
+export type MediaKs = MediaThemeKs | 'DEFAULT'
 
 export type ResponsiveProp<
-  V = string | number,
+  V = InterpolationValue,
   K extends string = MediaKs
 > = Partial<Record<K, V>>
 
@@ -21,59 +24,63 @@ export type StyledCssProp<
 
 export type StyledCssPropWithTheme = StyledCssProp & ThemeProps<DefaultTheme>
 
-let valueByMedia: ResponsiveProp<object> = {}
-const mergeObjValueByMedia = (prop: string, value: ResponsiveProp) => {
-  Object.keys(value).forEach((_key) => {
-    const key = _key as MediaKs
+function cssObj(key: string, value?: string | number) {
+  return {
+    [key]: value
+  }
+}
+function styledCss(props: StyledCssPropWithTheme) {
+  const template = {
+    plain: {},
+    media: {}
+  }
 
-    valueByMedia = {
-      ...valueByMedia,
-      [key]: {
-        ...valueByMedia[key],
-        [prop]: value[key]
+  for (const keyUntyped in props.css) {
+    const key = keyUntyped as keyof React.CSSProperties
+    const value = props.css[key]
+
+    if (typeof value !== 'object') {
+      template.plain = {
+        ...template.plain,
+        ...cssObj(key, value)
+      }
+    } else {
+      for (const mediaKeyUntyped in value) {
+        const mediaKey = mediaKeyUntyped as MediaKs
+
+        if (mediaKey === 'DEFAULT') {
+          template.plain = {
+            ...template.plain,
+            ...cssObj(key, value[mediaKey])
+          }
+        } else {
+          template.media = {
+            ...template.media,
+            [mediaKey]: {
+              ...(template.media as ResponsiveProp<object>)[mediaKey],
+              [key]: value[mediaKey]
+            }
+          }
+        }
       }
     }
-  })
-
-  return valueByMedia
-}
-const convertStrValueByMedia = (prop: unknown): ResponsiveProp =>
-  prop != null
-    ? typeof prop === 'object'
-      ? prop
-      : { [mediaDefaultK]: prop }
-    : {}
-const styledCss = () => (props: StyledCssPropWithTheme) => {
-  valueByMedia = {}
-  let propsWithValueByMedia = {}
-  let propsWithKeyByMedia = {}
-
-  for (const keyUntyped of Object.keys(props.css)) {
-    const key = keyUntyped as keyof React.CSSProperties
-
-    propsWithValueByMedia = {
-      ...propsWithValueByMedia,
-      [key]: convertStrValueByMedia(props.css[key])
-    }
   }
 
-  for (const key of Object.keys(propsWithValueByMedia)) {
-    propsWithKeyByMedia = {
-      ...propsWithKeyByMedia,
-      ...mergeObjValueByMedia(key, propsWithValueByMedia[key])
-    }
-  }
-
-  return Object.keys(propsWithKeyByMedia).reduce((prev, _curr) => {
-    const curr = _curr as MediaKs
+  template.media = Object.keys(template.media).reduce((prev, _curr) => {
+    const key = _curr as MediaThemeKs
 
     return css`
       ${prev};
-      ${curr === 'DEFAULT' ? '' : props.theme.media[curr]} {
-        ${propsWithKeyByMedia[curr]};
+      ${props.theme.media[key]} {
+        ${(template.media as ResponsiveProp)[key]};
       }
     `
   }, {})
+
+  return css`
+    ${template.plain}
+    ${template.media}
+  `
 }
 const Styled = styled.div`
   ${styledCss}
