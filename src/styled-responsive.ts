@@ -65,18 +65,20 @@ export type ResponsiveProps<
   T extends DefaultTheme = DefaultTheme
 > = ThemeProps<T> & O
 
-const REGEX_QUOTED_MEDIA_OR_PSEUDO = new RegExp(/(["'])(@|:)(.+?)\1/g)
+const REGEX_QUOTED_MEDIA_OR_PSEUDO = new RegExp(/([\\"'])[@:]\w+?(:\w+?)?\1/g)
 const REGEX_NEWLINE_SPACE_SEMICOLON = new RegExp(
   /\n\s+(?=\w+)(?!\w+;{1})|(?<=;)[\n\s+]/gm
 )
 const REGEX_NEWLINE_SPACE_ANY = new RegExp(/\n\s+(?=.*)/)
 
-const responsive =
+function isResponsive(arg: string) {
+  return arg.match(REGEX_QUOTED_MEDIA_OR_PSEUDO)
+}
+
+const styledResponsive =
   <O extends object, P extends ResponsiveProps<O> = ResponsiveProps<O>>(
     _sxs: TemplateStringsArray,
-    ...fns: ((
-      props: P
-    ) => InterpolationValue | React.JSXElementConstructor<O>)[]
+    ...fns: ((props: P) => InterpolationValue)[]
   ) =>
   (props: P) => {
     const ref = {
@@ -101,21 +103,18 @@ const responsive =
      * Looks at least for one "@<media>", ":<pseudo-class>" or
      * both (@dark:hover i.e) to split and reorganize it.
      */
-    if (
-      !Object.is(_sxs[0], ref.sxs[0]) &&
-      REGEX_QUOTED_MEDIA_OR_PSEUDO.test(ref.sxs[0])
-    ) {
+    if (!Object.is(_sxs[0], ref.sxs[0]) && isResponsive(ref.sxs[0])?.length) {
       const sxs = ref.sxs[0]
         .split(REGEX_NEWLINE_SPACE_SEMICOLON)
         .filter(Boolean)
         .map((sx) => sx.replace(REGEX_NEWLINE_SPACE_ANY, ' '))
 
       for (const sx of sxs) {
-        console.log(sx)
+        console.log(sx, isResponsive(sx))
       }
     }
 
     return ref.sxs
   }
 
-export default responsive
+export default styledResponsive
