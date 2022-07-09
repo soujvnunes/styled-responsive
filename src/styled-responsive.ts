@@ -49,29 +49,22 @@ export type ResponsiveProp<
   K extends MediaKs = MediaKs
 > = Partial<Record<K, V>>
 
-export type StyledResponsiveProps<
-  O extends keyof React.CSSProperties = keyof React.CSSProperties
-> = {
-  [K in O]?: React.CSSProperties[K] | ResponsiveProp<React.CSSProperties[K]>
-}
-
-/* function cssObj<K extends string, V>(key: K, value?: V) {
-  return {
-    [key]: value, 
-  };
-} */
+export type ResponsiveProps<
+  O extends object,
+  T extends DefaultTheme = DefaultTheme
+> = ThemeProps<T> & O
 
 const REGEX_QUOTED_MEDIA_OR_PSEUDO = new RegExp(/(["'])(@|:)(.+?)\1/g)
 const REGEX_SEMICOLON_NEWLINE_SPACE = new RegExp(/\n\s+(?=\w)|(?<=;)[\n\s+]/gm)
 
-const StyledResponsive =
-  <P extends object>(
+const responsive =
+  <O extends object, P extends ResponsiveProps<O> = ResponsiveProps<O>>(
     _sxs: TemplateStringsArray,
-    ...fns: ((props: P) => void)[]
+    ...fns: ((props: P) => InterpolationValue)[]
   ) =>
-  (props: P & ThemeProps<DefaultTheme>) => {
+  (props: P) => {
     const ref = {
-      sxs: [..._sxs]
+      sxs: ['']
     }
 
     /**
@@ -84,21 +77,24 @@ const StyledResponsive =
 
         return acc + fn + _sxs[index + 1]
       }, _sxs[0])
+    } else {
+      ref.sxs = [..._sxs]
+    }
 
-      /**
-       * Looks for at least one "@<media>", ":<pseudo-class>" or
-       * both (@dark:hover i.e) to split and reorganize it.
-       */
-      if (REGEX_QUOTED_MEDIA_OR_PSEUDO.test(ref.sxs[0])) {
-        const sx = ref.sxs[0]
-          .split(REGEX_SEMICOLON_NEWLINE_SPACE)
-          .filter(Boolean)
+    /**
+     * Looks for at least one "@<media>", ":<pseudo-class>" or
+     * both (@dark:hover i.e) to split and reorganize it.
+     */
+    if (
+      !Object.is(_sxs[0], ref.sxs[0]) &&
+      REGEX_QUOTED_MEDIA_OR_PSEUDO.test(ref.sxs[0])
+    ) {
+      const sx = ref.sxs[0].split(REGEX_SEMICOLON_NEWLINE_SPACE).filter(Boolean)
 
-        console.log(ref.sxs[0], sx)
-      }
+      console.log(ref.sxs[0], sx)
     }
 
     return ref.sxs
   }
 
-export default StyledResponsive
+export default responsive
