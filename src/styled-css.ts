@@ -43,30 +43,31 @@ function cssObj<K extends string, V>(key: K, value?: V) {
     [key]: value
   }
 }
-function styledCss(args: StyledCssProps) {
+function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
   const ref = refIniVal
 
-  for (const keyUntyped in args.css) {
-    if (Object.prototype.hasOwnProperty.call(args.css, keyUntyped)) {
-      const key = keyUntyped as keyof React.CSSProperties
-      const value = args.css[key]
+  for (const key in props.css) {
+    if (Object.prototype.hasOwnProperty.call(props.css, key)) {
+      const prop = key as keyof React.CSSProperties
+      const value = props.css[prop]
 
       if (typeof value === 'string') {
         ref.hasRaw = refIniVal.hasRaw
         ref.rawCounter = refIniVal.rawCounter
         ref.template = {
           ...ref.template,
-          ...cssObj(key, value)
+          ...cssObj(prop, value)
         }
       } else if (typeof value === 'object') {
-        for (const mediaKeyUntyped in value) {
-          if (Object.prototype.hasOwnProperty.call(value, mediaKeyUntyped)) {
-            const mediaKey = mediaKeyUntyped as MediaKs
+        for (const inKey in value) {
+          if (Object.prototype.hasOwnProperty.call(value, inKey)) {
+            const mediaKey = inKey as MediaKs
+            const rawTemplate = ref.rawTemplate as ResponsiveProp<object>
 
             if (mediaKey === 'DEFAULT') {
               ref.template = {
                 ...ref.template,
-                ...cssObj(key, value[mediaKey])
+                ...cssObj(prop, value[mediaKey])
               }
             } else {
               if (!ref.rawCounter) {
@@ -77,8 +78,8 @@ function styledCss(args: StyledCssProps) {
               ref.rawTemplate = {
                 ...ref.rawTemplate,
                 [mediaKey]: {
-                  ...(ref.rawTemplate as ResponsiveProp<object>)[mediaKey],
-                  [key]: value[mediaKey]
+                  ...rawTemplate[mediaKey],
+                  [prop]: value[mediaKey]
                 }
               }
             }
@@ -89,16 +90,18 @@ function styledCss(args: StyledCssProps) {
   }
 
   if (ref.hasRaw) {
-    ref.template = Object.keys(ref.rawTemplate).reduce((prev, _curr) => {
-      const key = _curr as MediaThemeKs
+    for (const key in ref.rawTemplate) {
+      if (Object.prototype.hasOwnProperty.call(ref.rawTemplate, key)) {
+        const mediaThemeKey = key as MediaThemeKs
+        const rawTemplate = ref.rawTemplate as ResponsiveProp
 
-      return css`
-        ${prev};
-        ${(props: ThemeProps<DefaultTheme>) => props.theme.media[key]} {
-          ${(ref.rawTemplate as ResponsiveProp)[key]};
+        ref.template = {
+          ...ref.template,
+          [props.theme.media[mediaThemeKey]]: rawTemplate[mediaThemeKey]
         }
-      `
-    }, ref.template)
+        delete rawTemplate[mediaThemeKey]
+      }
+    }
   }
 
   return css`
