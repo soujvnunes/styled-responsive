@@ -2,7 +2,11 @@ import renderer from 'react-test-renderer'
 import 'jest-styled-components'
 import Styled from './styled-css'
 import { THEME } from 'consts'
-import { ThemeProvider } from 'styled-components'
+import { StyledComponentPropsWithRef, ThemeProvider } from 'styled-components'
+
+const StyledCssComponent = (props: StyledComponentPropsWithRef<'div'>) => (
+  <Styled css={{ display: 'block' }} {...props} />
+)
 
 describe('Styled', () => {
   it('should render its style pair', () => {
@@ -47,7 +51,23 @@ describe('Styled', () => {
 
     expect(tree).toMatchSnapshot()
     expect(tree).toHaveStyleRule('color', 'black', {
-      media: '@media (prefers-color-scheme:dark)'
+      media: '(prefers-color-scheme:dark)'
     })
+  })
+  it('should merge with other components styled with css corretly', () => {
+    const tree = renderer
+      .create(
+        <Styled
+          as={StyledCssComponent}
+          css={{
+            color: 'white'
+          }}
+        />
+      )
+      .toJSON()
+
+    expect(tree).toMatchSnapshot()
+    expect(tree).toHaveStyleRule('color', 'white')
+    expect(tree).toHaveStyleRule('display', 'block')
   })
 })

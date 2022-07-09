@@ -1,18 +1,8 @@
 import styled, {
-  css,
   DefaultTheme,
   InterpolationValue,
   ThemeProps
 } from 'styled-components'
-
-/*
-const Component = styled.div`
-  ${scResponsive`
-    display: block 'md' flex;
-    color: black 'dark' white;
-  `}
-`;
-*/
 
 export type MediaThemeKs = keyof DefaultTheme['media']
 
@@ -31,20 +21,18 @@ export type StyledCssProps<
   }
 }
 
-const refIniVal = {
-  hasRaw: false,
-  rawCounter: 0,
-  rawTemplate: {},
-  template: {}
-}
-
 function cssObj<K extends string, V>(key: K, value?: V) {
   return {
     [key]: value
   }
 }
-function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
-  const ref = refIniVal
+export function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
+  const ref = {
+    hasRaw: false,
+    rawCounter: 0,
+    rawTemplate: {},
+    template: {}
+  }
 
   for (const key in props.css) {
     if (Object.prototype.hasOwnProperty.call(props.css, key)) {
@@ -52,22 +40,21 @@ function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
       const value = props.css[prop]
 
       if (typeof value === 'string') {
-        ref.hasRaw = refIniVal.hasRaw
-        ref.rawCounter = refIniVal.rawCounter
         ref.template = {
           ...ref.template,
           ...cssObj(prop, value)
         }
       } else if (typeof value === 'object') {
-        for (const inKey in value) {
-          if (Object.prototype.hasOwnProperty.call(value, inKey)) {
-            const mediaKey = inKey as MediaKs
+        for (const subKey in value) {
+          if (Object.prototype.hasOwnProperty.call(value, subKey)) {
+            const mediaKey = subKey as MediaKs
             const rawTemplate = ref.rawTemplate as ResponsiveProp<object>
+            const subValue = cssObj(prop, value[mediaKey])
 
             if (mediaKey === 'DEFAULT') {
               ref.template = {
                 ...ref.template,
-                ...cssObj(prop, value[mediaKey])
+                ...subValue
               }
             } else {
               if (!ref.rawCounter) {
@@ -79,7 +66,7 @@ function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
                 ...ref.rawTemplate,
                 [mediaKey]: {
                   ...rawTemplate[mediaKey],
-                  [prop]: value[mediaKey]
+                  ...subValue
                 }
               }
             }
@@ -89,7 +76,7 @@ function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
     }
   }
 
-  if (ref.hasRaw) {
+  if (ref.rawCounter && ref.hasRaw) {
     for (const key in ref.rawTemplate) {
       if (Object.prototype.hasOwnProperty.call(ref.rawTemplate, key)) {
         const mediaThemeKey = key as MediaThemeKs
@@ -104,9 +91,7 @@ function styledCss(props: StyledCssProps & ThemeProps<DefaultTheme>) {
     }
   }
 
-  return css`
-    ${ref.template}
-  `
+  return ref.template
 }
 
 export default styled.div`
