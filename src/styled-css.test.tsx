@@ -15,7 +15,7 @@ describe('Styled', () => {
         <Styled
           css={{
             alignItems: {
-              sm: 'center',
+              DEFAULT: 'center',
               md: 'flex-end'
             }
           }}
