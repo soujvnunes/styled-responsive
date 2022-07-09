@@ -55,7 +55,9 @@ export type ResponsiveProps<
 > = ThemeProps<T> & O
 
 const REGEX_QUOTED_MEDIA_OR_PSEUDO = new RegExp(/(["'])(@|:)(.+?)\1/g)
-const REGEX_SEMICOLON_NEWLINE_SPACE = new RegExp(/\n\s+(?=\w)|(?<=;)[\n\s+]/gm)
+const REGEX_SEMICOLON_NEWLINE_SPACE = new RegExp(
+  /\n\s+(?=\w+)(?!\w+;{1})|(?<=;)[\n\s+]/gm
+)
 
 const responsive =
   <O extends object, P extends ResponsiveProps<O> = ResponsiveProps<O>>(
