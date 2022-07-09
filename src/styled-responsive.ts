@@ -26,15 +26,24 @@ const REGEX_RESPONSIVE_KS = new RegExp(/([\\"'])([@:].+?)+?\1/g)
  * \n   property: value;\n
  * \n   property
  */
-const REGEX_CSSOBJECT_LINE = new RegExp(
-  /\n\s+(?=\w+)(?!\w+;{1})|(?<=;)[\n\s+]/gm
-)
+const REGEX_CSSOBJECT_LINE = new RegExp(/\n\s+(?=\w+)(?!\w+;)|(?<=;)[\n\s+]/gm)
 /**
  * Voids.
  *
  * something\n    something
  */
 const REGEX_VOID = new RegExp(/\n\s+(?=.*)/)
+/**
+ * Colon between dashed/non-dashed word with at least
+ * one space after it.
+ *
+ * property-name: value
+ */
+const REGEX_COLON = new RegExp(/(?<=\w+\p{Pd}*\w+):(?=\s+)/u)
+const REGEX_BRACES = new RegExp(/(?<=[}]).?(?=[{])/g)
+const REGEX_BRACES_OR_COLONS = new RegExp(
+  /(?<=\w+\p{Pd}*\w+):(?=\s+)|(?<=[}]).?(?=[{])/gu
+)
 
 function hasResponsiveKs(arg: string) {
   return arg.match(REGEX_RESPONSIVE_KS)
@@ -81,7 +90,9 @@ function styledResponsive<
         .map((style) => style.replace(REGEX_VOID, ' '))
 
       for (const style of stylesArray) {
-        console.log(style, hasResponsiveKs(style))
+        const pairArr = style.split(REGEX_BRACES_OR_COLONS)
+
+        console.log(pairArr)
       }
     }
 
