@@ -1,8 +1,4 @@
-import sc, {
-  DefaultTheme,
-  InterpolationValue,
-  StyledInterface
-} from 'styled-components'
+import { DefaultTheme, InterpolationValue, ThemeProps } from 'styled-components'
 
 // This:
 /**
@@ -61,31 +57,48 @@ export type StyledResponsiveProps<
 
 /* function cssObj<K extends string, V>(key: K, value?: V) {
   return {
-    [key]: value,
+    [key]: value, 
   };
 } */
 
-const StyledResponsive: StyledInterface =
-  (el) =>
-  (sxs, ...fns) => {
+const REGEX_QUOTED_MEDIA_OR_PSEUDO = new RegExp(/(["'])(@|:)(.+?)\1/g)
+const REGEX_SEMICOLON_NEWLINE_SPACE = new RegExp(/\n\s+(?=\w)|(?<=;)[\n\s+]/gm)
+
+const StyledResponsive =
+  <P extends object>(
+    _sxs: TemplateStringsArray,
+    ...fns: ((props: P) => void)[]
+  ) =>
+  (props: P & ThemeProps<DefaultTheme>) => {
     const ref = {
-      sxs: [...sxs],
-      fns: [...fns]
+      sxs: [..._sxs]
     }
 
-    if (Array.isArray(sxs)) {
-      for (const sx of sxs) {
-        const sxi = sxs.indexOf(sx)
+    /**
+     * Resolves interpolations and merge into a template string
+     */
+    if (Array.isArray(fns)) {
+      ref.sxs[0] = fns.reduce((acc, _fn, index) => {
+        const isFn = typeof _fn === 'function'
+        const fn = isFn ? _fn(props) : _fn
 
-        console.log(sx, fns[sxi])
+        return acc + fn + _sxs[index + 1]
+      }, _sxs[0])
 
-        for (const sxObj of sx.split(/\n/)) {
-          // const indexFromSx = sx.indexOf(sxObj);
-        }
+      /**
+       * Looks for at least one "@<media>", ":<pseudo-class>" or
+       * both (@dark:hover i.e) to split and reorganize it.
+       */
+      if (REGEX_QUOTED_MEDIA_OR_PSEUDO.test(ref.sxs[0])) {
+        const sx = ref.sxs[0]
+          .split(REGEX_SEMICOLON_NEWLINE_SPACE)
+          .filter(Boolean)
+
+        console.log(ref.sxs[0], sx)
       }
     }
 
-    return sc(el)(ref.sxs, ...ref.fns)
+    return ref.sxs
   }
 
 export default StyledResponsive
