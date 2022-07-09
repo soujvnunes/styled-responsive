@@ -30,9 +30,9 @@ const REGEX_CSSOBJECT_LINE = new RegExp(/\n\s+(?=\w+)(?!\w+;)|(?<=;)[\n\s+]/gm)
 /**
  * Voids.
  *
- * something\n    something
+ * something\n    something;
  */
-const REGEX_VOID = new RegExp(/\n\s+(?=.*)/)
+const REGEX_VOID = new RegExp(/\n\s+(?=.*)|;/g)
 /**
  * Colon between dashed/non-dashed word with at least
  * one space after it.
@@ -66,13 +66,16 @@ function styledResponsive<
      * into a template string array.
      */
     if (Array.isArray(interpolations)) {
-      for (const interpolation of interpolations) {
-        const isFn = typeof interpolation === 'function'
-        const fnr = isFn ? interpolation(props) : interpolation
-        const fni = interpolations.indexOf(interpolation)
+      styles.array = [
+        interpolations.reduce((template, _interpolation, index) => {
+          const interpolation =
+            typeof _interpolation === 'function'
+              ? _interpolation(props)
+              : _interpolation
 
-        styles.array = [styles.array[0] + fnr + _stylesArray[fni + 1]]
-      }
+          return template + interpolation + _stylesArray[index + 1]
+        }, _stylesArray[0])
+      ]
     }
 
     /**
@@ -84,16 +87,16 @@ function styledResponsive<
       !Object.is(_stylesArray[0], styles.array[0]) &&
       hasResponsiveKs(styles.array[0])?.length
     ) {
-      const stylesArray = styles.array[0]
-        .split(REGEX_CSSOBJECT_LINE)
-        .filter(Boolean)
-        .map((style) => style.replace(REGEX_VOID, ' '))
-
-      for (const style of stylesArray) {
-        const pairArr = style.split(REGEX_BRACES_OR_COLONS)
-
-        console.log(pairArr)
-      }
+      console.log(
+        styles.array[0],
+        styles.array[0]
+          .split(REGEX_CSSOBJECT_LINE)
+          .map((style) =>
+            style.replace(REGEX_VOID, ' ').split(REGEX_BRACES_OR_COLONS)
+          )
+          .flat(Infinity)
+          .filter(Boolean)
+      )
     }
 
     return styles.array
