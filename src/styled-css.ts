@@ -5,16 +5,25 @@ import styled, {
   ThemeProps
 } from 'styled-components'
 
+/*
+const Component = styled.div`
+  ${scResponsive`
+    display: block 'md' flex;
+    color: black 'dark' white;
+  `}
+`;
+*/
+
 export type MediaThemeKs = keyof DefaultTheme['media']
 
 export type MediaKs = MediaThemeKs | 'DEFAULT'
 
 export type ResponsiveProp<
   V = InterpolationValue,
-  K extends string = MediaKs
+  K extends MediaKs = MediaKs
 > = Partial<Record<K, V>>
 
-export type StyledCssProp<
+export type StyledCssProps<
   O extends keyof React.CSSProperties = keyof React.CSSProperties
 > = {
   css: {
@@ -22,43 +31,46 @@ export type StyledCssProp<
   }
 }
 
-export type StyledCssPropWithTheme = StyledCssProp & ThemeProps<DefaultTheme>
-
-function cssObj(key: string, value?: string | number) {
+function cssObj<K extends string, V>(key: K, value?: V) {
   return {
     [key]: value
   }
 }
-function styledCss(props: StyledCssPropWithTheme) {
-  const template = {
-    plain: {},
-    media: {}
+function styledCss(args: StyledCssProps) {
+  const ref = {
+    hasRaw: false,
+    raw: {},
+    template: {}
   }
 
-  for (const keyUntyped in props.css) {
-    const key = keyUntyped as keyof React.CSSProperties
-    const value = props.css[key]
+  for (const keyUntyped in args.css) {
+    if (Object.prototype.hasOwnProperty.call(args.css, keyUntyped)) {
+      const key = keyUntyped as keyof React.CSSProperties
+      const value = args.css[key]
 
-    if (typeof value !== 'object') {
-      template.plain = {
-        ...template.plain,
-        ...cssObj(key, value)
-      }
-    } else {
-      for (const mediaKeyUntyped in value) {
-        const mediaKey = mediaKeyUntyped as MediaKs
+      if (typeof value === 'string') {
+        ref.template = {
+          ...ref.template,
+          ...cssObj(key, value)
+        }
+      } else if (typeof value === 'object') {
+        for (const mediaKeyUntyped in value) {
+          if (Object.prototype.hasOwnProperty.call(value, mediaKeyUntyped)) {
+            const mediaKey = mediaKeyUntyped as MediaKs
 
-        if (mediaKey === 'DEFAULT') {
-          template.plain = {
-            ...template.plain,
-            ...cssObj(key, value[mediaKey])
-          }
-        } else {
-          template.media = {
-            ...template.media,
-            [mediaKey]: {
-              ...(template.media as ResponsiveProp<object>)[mediaKey],
-              [key]: value[mediaKey]
+            if (mediaKey === 'DEFAULT') {
+              ref.template = {
+                ...ref.template,
+                ...cssObj(key, value[mediaKey])
+              }
+            } else {
+              ref.raw = {
+                ...ref.raw,
+                [mediaKey]: {
+                  ...(ref.raw as ResponsiveProp<object>)[mediaKey],
+                  [key]: value[mediaKey]
+                }
+              }
             }
           }
         }
@@ -66,24 +78,22 @@ function styledCss(props: StyledCssPropWithTheme) {
     }
   }
 
-  template.media = Object.keys(template.media).reduce((prev, _curr) => {
+  ref.template = Object.keys(ref.raw).reduce((prev, _curr) => {
     const key = _curr as MediaThemeKs
 
     return css`
       ${prev};
-      ${props.theme.media[key]} {
-        ${(template.media as ResponsiveProp)[key]};
+      ${(props: ThemeProps<DefaultTheme>) => props.theme.media[key]} {
+        ${(ref.raw as ResponsiveProp)[key]};
       }
     `
-  }, {})
+  }, ref.template)
 
   return css`
-    ${template.plain}
-    ${template.media}
+    ${ref.template}
   `
 }
-const Styled = styled.div`
+
+export default styled.div`
   ${styledCss}
 `
-
-export default Styled

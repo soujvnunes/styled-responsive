@@ -1,12 +1,11 @@
 import renderer from 'react-test-renderer'
-import Styled from './styled-css'
 import 'jest-styled-components'
+import Styled from './styled-css'
 
 describe('Styled', () => {
-  it('should render its style pair based on string value props', () => {
+  it('should render its style pair', () => {
     const tree = renderer.create(<Styled css={{ display: 'flex' }} />).toJSON()
 
-    expect(tree).toMatchSnapshot()
     expect(tree).toHaveStyleRule('display', 'flex')
   })
   it('should render its style pair based on object value props', () => {
@@ -14,9 +13,8 @@ describe('Styled', () => {
       .create(
         <Styled
           css={{
-            alignItems: {
-              DEFAULT: 'center',
-              md: 'flex-end'
+            color: {
+              lg: 'white'
             }
           }}
         />
@@ -24,6 +22,8 @@ describe('Styled', () => {
       .toJSON()
 
     expect(tree).toMatchSnapshot()
-    expect(tree).toHaveStyleRule('align-items', 'flex-end')
+    expect(tree).toHaveStyleRule('color', 'white', {
+      media: '@media screen and (min-width: 40rem)'
+    })
   })
 })
