@@ -11,6 +11,22 @@ const Button = styled.button`
     "@dark:hover" rgb(255 255 255 / 0.6);
 `;
 */
+
+// Work
+/**
+display: block;
+padding: 1rem 2rem;
+color: rgb(0 0 0 / 1);
+@md
+  display: flex;
+:hover
+  color: rgb(0 0 0 / 0.6);
+@dark
+  color: rgb(255 255 255 / 1);
+  :hover
+    color: rgb(255 255 255 / 0.6);
+*/
+
 // Equals:
 /**
 .JuhImL {
@@ -44,25 +60,23 @@ export type MediaThemeKs = keyof DefaultTheme['media']
 
 export type MediaKs = MediaThemeKs | 'DEFAULT'
 
-export type ResponsiveProp<
-  V = InterpolationValue,
-  K extends MediaKs = MediaKs
-> = Partial<Record<K, V>>
-
 export type ResponsiveProps<
   O extends object,
   T extends DefaultTheme = DefaultTheme
 > = ThemeProps<T> & O
 
 const REGEX_QUOTED_MEDIA_OR_PSEUDO = new RegExp(/(["'])(@|:)(.+?)\1/g)
-const REGEX_SEMICOLON_NEWLINE_SPACE = new RegExp(
+const REGEX_NEWLINE_SPACE_SEMICOLON = new RegExp(
   /\n\s+(?=\w+)(?!\w+;{1})|(?<=;)[\n\s+]/gm
 )
+const REGEX_NEWLINE_SPACE_ANY = new RegExp(/\n\s+(?=.*)/)
 
 const responsive =
   <O extends object, P extends ResponsiveProps<O> = ResponsiveProps<O>>(
     _sxs: TemplateStringsArray,
-    ...fns: ((props: P) => InterpolationValue)[]
+    ...fns: ((
+      props: P
+    ) => InterpolationValue | React.JSXElementConstructor<O>)[]
   ) =>
   (props: P) => {
     const ref = {
@@ -70,7 +84,8 @@ const responsive =
     }
 
     /**
-     * Resolves interpolations and merge into a template string
+     * Looks at least for one interpolation, resolves it
+     * and merge into a single template string array
      */
     if (Array.isArray(fns)) {
       for (const fn of fns) {
@@ -83,16 +98,21 @@ const responsive =
     }
 
     /**
-     * Looks for at least one "@<media>", ":<pseudo-class>" or
+     * Looks at least for one "@<media>", ":<pseudo-class>" or
      * both (@dark:hover i.e) to split and reorganize it.
      */
     if (
       !Object.is(_sxs[0], ref.sxs[0]) &&
       REGEX_QUOTED_MEDIA_OR_PSEUDO.test(ref.sxs[0])
     ) {
-      const sx = ref.sxs[0].split(REGEX_SEMICOLON_NEWLINE_SPACE).filter(Boolean)
+      const sxs = ref.sxs[0]
+        .split(REGEX_NEWLINE_SPACE_SEMICOLON)
+        .filter(Boolean)
+        .map((sx) => sx.replace(REGEX_NEWLINE_SPACE_ANY, ' '))
 
-      console.log(ref.sxs[0], sx)
+      for (const sx of sxs) {
+        console.log(sx)
+      }
     }
 
     return ref.sxs
