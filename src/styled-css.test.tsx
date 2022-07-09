@@ -6,6 +6,7 @@ describe('Styled', () => {
   it('should render its style pair based on string value props', () => {
     const tree = renderer.create(<Styled css={{ display: 'flex' }} />).toJSON()
 
+    expect(tree).toMatchSnapshot()
     expect(tree).toHaveStyleRule('display', 'flex')
   })
   it('should render its style pair based on object value props', () => {
@@ -22,6 +23,7 @@ describe('Styled', () => {
       )
       .toJSON()
 
+    expect(tree).toMatchSnapshot()
     expect(tree).toHaveStyleRule('align-items', 'flex-end')
   })
 })

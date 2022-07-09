@@ -1,37 +1,6 @@
 import styled, { css, DefaultTheme, ThemeProps } from 'styled-components'
 import t from 'utils/token'
 
-const cssK = 'css' as const
-const cssKs: (keyof React.CSSProperties)[] = [
-  // flex
-  'display',
-  'flexDirection',
-  'flexWrap',
-  'justifyContent',
-  'alignItems',
-  'alignContent',
-  'order',
-  'flexGrow',
-  'flexShrink',
-  'flexBasis',
-  'alignSelf',
-  // layout
-  'margin',
-  'marginTop',
-  'marginRight',
-  'marginBottom',
-  'marginLeft',
-  'paddingTop',
-  'paddingLeft',
-  'paddingRight',
-  'maxWidth',
-  'height',
-  // other
-  'backgroundColor'
-]
-
-type CssK = typeof cssK
-
 /**
  * For mobile-1st development
  * "sm" is default, followed by "md" and "lg"
@@ -56,26 +25,22 @@ export type ResponsiveProp<
 
 export type StyledCssProp<
   O extends keyof React.CSSProperties = keyof React.CSSProperties
-> = Record<
-  CssK,
-  {
+> = {
+  css?: {
     [K in O]?: React.CSSProperties[K] | ResponsiveProp<React.CSSProperties[K]>
   }
->
+}
 
 export type StyledCssPropWithTheme = StyledCssProp & ThemeProps<DefaultTheme>
 
-function getResponsiveValue(key: string, value?: string | number) {
-  return {
-    [key]: value
-  }
-}
-function getResponsiveProp(prop: unknown): ResponsiveProp {
-  return prop != null ? (typeof prop === 'object' ? prop : { sm: prop }) : {}
-}
-function getProp<K extends keyof React.CSSProperties>(key: K) {
-  return (props: StyledCssPropWithTheme) => {
-    const prop = getResponsiveProp(props.css[key])
+const getPropValue = (key: string, value?: string | number) => ({
+  [key]: value
+})
+const getPropKey = (prop: unknown): ResponsiveProp =>
+  prop != null ? (typeof prop === 'object' ? prop : { sm: prop }) : {}
+const getResponsiveProps =
+  (key: keyof React.CSSProperties) => (props: StyledCssPropWithTheme) => {
+    const prop = getPropKey((props.css || {})[key])
 
     return Object.keys(prop).reduce((prev, _curr) => {
       const curr = _curr as Exclude<MediaKs, MediaDefaultKs>
@@ -83,25 +48,23 @@ function getProp<K extends keyof React.CSSProperties>(key: K) {
       return css`
         ${prev};
         ${t(curr)} {
-          ${getResponsiveValue(key, prop[curr])}
+          ${getPropValue(key, prop[curr])}
         } ;
       `
     }, {})
   }
-}
-function generateProps<K extends keyof React.CSSProperties>(array: Array<K>) {
-  return array.reduce(
-    (prev, curr) =>
-      css`
-        ${prev};
-        ${getProp<K>(curr)};
-      `,
-    {}
-  )
-}
+const generateProps = () => (props: StyledCssPropWithTheme) =>
+  Object.keys(props.css || {}).reduce((prev, _curr) => {
+    const ks = _curr as keyof React.CSSProperties
+
+    return css`
+      ${prev};
+      ${getResponsiveProps(ks)};
+    `
+  }, {})
 
 const StyledCss = styled.div<StyledCssProp>`
-  ${generateProps(cssKs)};
+  ${generateProps};
 `
 
 StyledCss.displayName = 'StyledCss'
