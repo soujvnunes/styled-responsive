@@ -12,16 +12,53 @@ npm install --save styled-responsive
 
 ## Usage
 
-```tsx
-import React, { Component } from 'react'
+```jsx
+import styled from "styled-components";
+import sr from "styled-responsive";
 
-import MyComponent from 'styled-responsive'
-import 'styled-responsive/dist/index.css'
+const Button = styled.button(sr`
+  display: block "@md" flex;
+  padding: ${(props) => props.theme.sizing(1, 2)};
+  background-color: rgb(255 255 255 / 1)
+    "@dark" rgb(0 0 0 / 1);
+  color: rgb(0 0 0 / 1)
+    ":hover" rgb(0 0 0 / 0.6)
+    "@dark" rgb(255 255 255 / 1)
+    "@dark:hover" rgb(255 255 255 / 0.6);
+`);
 
-class Example extends Component {
-  render() {
-    return <MyComponent />
-  }
+function App() {
+  const theme = useTheme();
+
+  return <Button>Click</Button>;
+}
+```
+
+```jsx
+import styled, { useTheme } from "styled-components";
+import sc from "styled-css";
+
+const Button = styled.button(sc);
+
+function App() {
+  const theme = useTheme();
+
+  return (
+    <Button
+      css={{
+        padding: theme.sizing.sm,
+        display: {
+          DEFAULT: "flex",
+          md: "block",
+        },
+        color: {
+          DEFAULT: "black",
+          dark: "white",
+        },
+      }}>
+      Click
+    </Button>
+  );
 }
 ```
 
