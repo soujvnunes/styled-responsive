@@ -1,73 +1,80 @@
-import renderer from 'react-test-renderer'
-import 'jest-styled-components'
-import Styled from './styled-css'
-import { THEME } from 'consts'
-import { StyledComponentPropsWithRef, ThemeProvider } from 'styled-components'
+import renderer from "react-test-renderer";
+import "jest-styled-components";
+import { styledCss } from "./styled-css";
+import { THEME } from "consts";
+import styled, {
+  StyledComponentPropsWithRef,
+  ThemeProvider,
+} from "styled-components";
 
-const StyledCssComponent = (props: StyledComponentPropsWithRef<'div'>) => (
-  <Styled css={{ display: 'block' }} {...props} />
-)
+const Styled = styled.button`
+  ${styledCss}
+`;
 
-describe('Styled', () => {
-  it('should render its style pair', () => {
-    const tree = renderer.create(<Styled css={{ display: 'flex' }} />).toJSON()
+function StyledCssComponent(props: StyledComponentPropsWithRef<"div">) {
+  return <Styled css={{ display: "block" }} {...props} />;
+}
 
-    expect(tree).toMatchSnapshot()
-    expect(tree).toHaveStyleRule('display', 'flex')
-  })
-  it('should render its style pair based on object value props', () => {
+describe("Styled", () => {
+  it("should render its style pair", () => {
+    const tree = renderer.create(<Styled css={{ display: "flex" }} />).toJSON();
+
+    expect(tree).toMatchSnapshot();
+    expect(tree).toHaveStyleRule("display", "flex");
+  });
+  it("should render its style pair based on object value props", () => {
     const tree = renderer
       .create(
         <ThemeProvider theme={THEME}>
           <Styled
             css={{
               color: {
-                DEFAULT: 'white'
-              }
+                DEFAULT: "white",
+              },
             }}
           />
         </ThemeProvider>
       )
-      .toJSON()
+      .toJSON();
 
-    expect(tree).toMatchSnapshot()
-    expect(tree).toHaveStyleRule('color', 'white')
-  })
-  it('should render its style pair based on object responsive value props', () => {
+    expect(tree).toMatchSnapshot();
+    expect(tree).toHaveStyleRule("color", "white");
+  });
+  it("should render its style pair based on object responsive value props", () => {
     const tree = renderer
       .create(
         <ThemeProvider theme={THEME}>
           <Styled
             css={{
               color: {
-                DEFAULT: 'white',
-                dark: 'black'
-              }
+                DEFAULT: "white",
+                dark: "black",
+              },
             }}
           />
         </ThemeProvider>
       )
-      .toJSON()
+      .toJSON();
 
-    expect(tree).toMatchSnapshot()
-    expect(tree).toHaveStyleRule('color', 'black', {
-      media: '(prefers-color-scheme:dark)'
-    })
-  })
-  it('should merge with other components styled with css corretly', () => {
+    expect(tree).toMatchSnapshot();
+    expect(tree).toHaveStyleRule("color", "black", {
+      media: "(prefers-color-scheme:dark)",
+    });
+  });
+  it("should merge with other components styled with css corretly", () => {
     const tree = renderer
       .create(
         <Styled
           as={StyledCssComponent}
           css={{
-            color: 'white'
+            color: "white",
           }}
         />
       )
-      .toJSON()
+      .toJSON();
 
-    expect(tree).toMatchSnapshot()
-    expect(tree).toHaveStyleRule('color', 'white')
-    expect(tree).toHaveStyleRule('display', 'block')
-  })
-})
+    expect(tree).toMatchSnapshot();
+    expect(tree).toHaveStyleRule("color", "white");
+    expect(tree).toHaveStyleRule("display", "block");
+  });
+});
